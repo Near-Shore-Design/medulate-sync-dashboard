@@ -90,8 +90,81 @@ export async function login(username: string, password: string) {
     throw new Error(error.detail || 'Invalid credentials');
   }
   const data = await res.json();
+  // The dashboard is for administrators only. Reject non-admin accounts BEFORE
+  // persisting any tokens — a self-registered trainee must never get a session.
+  const user = data.user;
+  if (!user?.is_institution_admin && !user?.is_platform_admin) {
+    throw new Error('This dashboard is for administrators only.');
+  }
   setTokens({ access: data.access, refresh: data.refresh });
-  return data.user;
+  return user;
+}
+
+// --- Public self-registration (no auth) -----------------------------------
+// These power the standalone /signup page. They intentionally do NOT store
+// tokens: registering creates a trainee account for the DHRT training app,
+// it does not grant dashboard access.
+
+export interface ValidateCodeDepartment {
+  id: number;
+  name: string;
+}
+
+export interface ValidateCodeResponse {
+  valid: boolean;
+  institution?: { id: number; name: string; slug: string };
+  departments?: ValidateCodeDepartment[];
+  detail?: string;
+}
+
+export async function validateCode(code: string): Promise<ValidateCodeResponse> {
+  const res = await fetch(`${API_BASE}/auth/validate-code/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ registration_code: code.trim().toUpperCase() }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { valid: false, detail: data.detail || 'Invalid registration code.' };
+  }
+  return data;
+}
+
+export interface RegisterPayload {
+  email: string;
+  full_name: string;
+  password: string;
+  registration_code: string;
+  department_id: number;
+  unit: string;
+}
+
+export async function registerAccount(payload: RegisterPayload): Promise<void> {
+  const res = await fetch(`${API_BASE}/auth/register/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...payload,
+      registration_code: payload.registration_code.trim().toUpperCase(),
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const firstField = (v: unknown) =>
+      Array.isArray(v) ? String(v[0]) : typeof v === 'string' ? v : null;
+    const msg =
+      firstField(err.detail) ||
+      firstField(err.registration_code) ||
+      firstField(err.email) ||
+      firstField(err.password) ||
+      firstField(err.department_id) ||
+      firstField(err.unit) ||
+      firstField(err.non_field_errors) ||
+      'Registration failed. Please check your details and try again.';
+    throw new Error(msg);
+  }
+  // NOTE: /auth/register/ returns access + refresh tokens. We deliberately
+  // discard them — self-signup must not produce a dashboard session.
 }
 
 export async function logout() {

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { getTokens, login as apiLogin, logout as apiLogout, getProfile } from '@/services/api';
+import { getTokens, login as apiLogin, logout as apiLogout, getProfile, clearTokens } from '@/services/api';
 
 interface User {
   id: number;
@@ -7,6 +7,12 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
+  is_institution_admin?: boolean;
+  is_platform_admin?: boolean;
+}
+
+function isAdmin(user: User | null | undefined): boolean {
+  return !!(user?.is_institution_admin || user?.is_platform_admin);
 }
 
 interface AuthContextType {
@@ -27,7 +33,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const tokens = getTokens();
     if (tokens?.access) {
       getProfile()
-        .then(setUser)
+        .then((profile: User) => {
+          // Re-assert the admins-only rule on every reload, not just at login.
+          if (isAdmin(profile)) {
+            setUser(profile);
+          } else {
+            clearTokens();
+            setUser(null);
+          }
+        })
         .catch(() => setUser(null))
         .finally(() => setIsLoading(false));
     } else {

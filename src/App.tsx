@@ -11,6 +11,7 @@ import CaseReviewPage from "./pages/CaseReviewPage";
 import LicensesAccessPage from "./pages/LicensesAccessPage";
 import InboxPage from "./pages/InboxPage";
 import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -62,6 +63,8 @@ function AppRoutes() {
           !isLoading && isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
         }
       />
+      {/* Public self-registration. Standalone — does NOT lead into the dashboard. */}
+      <Route path="/signup" element={<SignupPage />} />
       <Route path="/*" element={<ProtectedRoutes />} />
     </Routes>
   );
