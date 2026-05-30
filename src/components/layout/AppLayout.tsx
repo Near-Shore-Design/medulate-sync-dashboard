@@ -223,7 +223,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                             <p className="text-xs font-semibold text-foreground">Sample Progress Report</p>
                           </div>
                           <div className="rounded bg-muted/50 p-3 space-y-2 text-[11px]">
-                            <p className="font-semibold text-foreground">SOPHIA Sync — Weekly Progress Report</p>
+                            <p className="font-semibold text-foreground">Medulate Sync — Weekly Progress Report</p>
                             <p className="text-muted-foreground">Period: Feb 6–13, 2026</p>
                             <div className="border-t pt-2 space-y-1">
                               <p className="text-foreground"><strong>System Usage:</strong> 148 active students, 34 active today</p>

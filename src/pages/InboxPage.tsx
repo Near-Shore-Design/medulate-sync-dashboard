@@ -27,7 +27,7 @@ const statusFilters = [
 ];
 
 const templates = [
-  { label: "📋 Complete Course", text: "This is a reminder to please complete your CVC training course before your deadline of {deadline}. Log in to SOPHIA Sync to continue your progress." },
+  { label: "📋 Complete Course", text: "This is a reminder to please complete your CVC training course before your deadline of {deadline}. Log in to Medulate Sync to continue your progress." },
   { label: "🔄 Additional Practice", text: "You have been identified as needing additional practice. Please log in and complete the assigned practice modules before {deadline}." },
   { label: "⏰ Deadline Approaching", text: "Your training deadline of {deadline} is approaching. Please make sure to complete all required modules before the due date." },
   { label: "✅ Verification Reminder", text: "Please complete your Verification of Proficiency assessment by {deadline}. This is required to finish the training program." },

@@ -44,7 +44,7 @@ export function AppSidebar() {
           </div>
           <div>
             <h1 className="text-base font-bold leading-tight text-sidebar-foreground">
-              SOPHIA <span className="text-sidebar-primary">Sync</span>
+              Medulate <span className="text-sidebar-primary">Sync</span>
             </h1>
             <p className="text-[9px] font-medium uppercase tracking-widest text-sidebar-foreground/50">
               CVC Training

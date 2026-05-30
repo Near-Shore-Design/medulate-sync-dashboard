@@ -123,7 +123,7 @@ const SignupPage = () => {
               )}
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Join SOPHIA Sync</h1>
+          <h1 className="text-2xl font-bold text-foreground">Join Medulate Sync</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {step === 'code' && 'Enter your registration code to get started'}
             {step === 'details' && institution && `Creating your account for ${institution.name}`}

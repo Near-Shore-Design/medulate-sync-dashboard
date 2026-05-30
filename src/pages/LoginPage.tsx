@@ -33,7 +33,7 @@ const LoginPage = () => {
               <KeyRound className="h-7 w-7 text-primary" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">SOPHIA Sync</h1>
+          <h1 className="text-2xl font-bold text-foreground">Medulate Sync</h1>
           <p className="text-sm text-muted-foreground mt-1">Sign in to your dashboard</p>
         </div>
 

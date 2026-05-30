@@ -16,7 +16,7 @@ const DashboardHeader = () => {
             </div>
             <div>
               <h1 className="text-lg font-bold leading-tight tracking-tight text-foreground">
-                SOPHIA <span className="text-primary">Sync</span>
+                Medulate <span className="text-primary">Sync</span>
               </h1>
               <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                 CVC Training Dashboard
