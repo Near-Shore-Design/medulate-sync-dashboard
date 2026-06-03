@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { InstitutionFilterProvider } from "@/contexts/InstitutionFilterContext";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import StudentsPage from "./pages/StudentsPage";
@@ -11,7 +12,8 @@ import CaseReviewPage from "./pages/CaseReviewPage";
 import LicensesAccessPage from "./pages/LicensesAccessPage";
 import InboxPage from "./pages/InboxPage";
 import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
+import RegistrationCodesPage from "./pages/RegistrationCodesPage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -46,10 +48,28 @@ function ProtectedRoutes() {
         <Route path="/cases" element={<CaseReviewPage />} />
         <Route path="/licenses" element={<LicensesAccessPage />} />
         <Route path="/inbox" element={<InboxPage />} />
+        <Route path="/codes" element={<RegistrationCodesPage />} />
+        <Route
+          path="/admin"
+          element={
+            <PlatformAdminRoute>
+              <AdminPage />
+            </PlatformAdminRoute>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
   );
+}
+
+// Superadmin-only routes: institution admins are bounced back to the dashboard.
+function PlatformAdminRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user?.is_platform_admin) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
 }
 
 function AppRoutes() {
@@ -63,8 +83,6 @@ function AppRoutes() {
           !isLoading && isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
         }
       />
-      {/* Public self-registration. Standalone — does NOT lead into the dashboard. */}
-      <Route path="/signup" element={<SignupPage />} />
       <Route path="/*" element={<ProtectedRoutes />} />
     </Routes>
   );
@@ -73,13 +91,15 @@ function AppRoutes() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
+      <InstitutionFilterProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </InstitutionFilterProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

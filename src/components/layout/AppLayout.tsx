@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { students } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useInstitutionFilter } from "@/contexts/InstitutionFilterContext";
+import { useInstitutions } from "@/hooks/useAdmin";
 
 const notificationItems = () => {
   const needsAttention = students.filter((s) => s.needsPractice || s.daysRemaining <= 3);
@@ -34,9 +36,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<"profile" | "password" | "notifications" | null>(null);
 
+  const { institutionId, setInstitutionId } = useInstitutionFilter();
+  const { data: institutions } = useInstitutions(!!user?.is_platform_admin);
+
   const [name, setName] = useState(user ? `${user.first_name} ${user.last_name}`.trim() || user.username : "");
   const [email, setEmail] = useState(user?.email || "");
-  const [affiliation, setAffiliation] = useState("Mercy General Hospital");
+  const [affiliation, setAffiliation] = useState(
+    user?.institution?.name || (user?.is_platform_admin ? "Medulate Platform" : "")
+  );
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -77,6 +84,27 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {/* Superadmin: filter every page down to one institution */}
+                {user?.is_platform_admin && (
+                  <Select
+                    value={institutionId != null ? String(institutionId) : "all"}
+                    onValueChange={(value) =>
+                      setInstitutionId(value === "all" ? null : Number(value))
+                    }
+                  >
+                    <SelectTrigger className="h-8 w-[190px] text-xs bg-muted/50 border-none focus:ring-primary/30">
+                      <SelectValue placeholder="All institutions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All institutions</SelectItem>
+                      {(institutions ?? []).map((inst) => (
+                        <SelectItem key={inst.id} value={String(inst.id)}>
+                          {inst.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 {/* Notifications */}
                 <Popover open={notifOpen} onOpenChange={setNotifOpen}>
                   <PopoverTrigger asChild>

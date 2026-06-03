@@ -45,6 +45,21 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+// --- Superadmin institution filter -----------------------------------------
+// Platform admins see every institution's data merged; the header dropdown
+// narrows to one institution. The backend only honors ?institution= for
+// superusers, so appending it globally to GETs is harmless for everyone else.
+let institutionFilter: number | null = null;
+
+export function setApiInstitutionFilter(id: number | null) {
+  institutionFilter = id;
+}
+
+function withInstitutionFilter(path: string, method: string): string {
+  if (method !== 'GET' || institutionFilter == null) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}institution=${institutionFilter}`;
+}
+
 export async function apiFetch<T = any>(
   path: string,
   options: RequestInit = {}
@@ -58,14 +73,16 @@ export async function apiFetch<T = any>(
     headers['Authorization'] = `Bearer ${tokens.access}`;
   }
 
-  let res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const method = (options.method || 'GET').toUpperCase();
+  const url = `${API_BASE}${withInstitutionFilter(path, method)}`;
+  let res = await fetch(url, { ...options, headers });
 
   // If 401, try refreshing the token
   if (res.status === 401 && tokens?.refresh) {
     const newAccess = await refreshAccessToken();
     if (newAccess) {
       headers['Authorization'] = `Bearer ${newAccess}`;
-      res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+      res = await fetch(url, { ...options, headers });
     }
   }
 
@@ -100,72 +117,9 @@ export async function login(username: string, password: string) {
   return user;
 }
 
-// --- Public self-registration (no auth) -----------------------------------
-// These power the standalone /signup page. They intentionally do NOT store
-// tokens: registering creates a trainee account for the DHRT training app,
-// it does not grant dashboard access.
-
-export interface ValidateCodeDepartment {
-  id: number;
-  name: string;
-}
-
-export interface ValidateCodeResponse {
-  valid: boolean;
-  institution?: { id: number; name: string; slug: string };
-  departments?: ValidateCodeDepartment[];
-  detail?: string;
-}
-
-export async function validateCode(code: string): Promise<ValidateCodeResponse> {
-  const res = await fetch(`${API_BASE}/auth/validate-code/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ registration_code: code.trim().toUpperCase() }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    return { valid: false, detail: data.detail || 'Invalid registration code.' };
-  }
-  return data;
-}
-
-export interface RegisterPayload {
-  email: string;
-  full_name: string;
-  password: string;
-  registration_code: string;
-  department_id: number;
-  unit: string;
-}
-
-export async function registerAccount(payload: RegisterPayload): Promise<void> {
-  const res = await fetch(`${API_BASE}/auth/register/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ...payload,
-      registration_code: payload.registration_code.trim().toUpperCase(),
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const firstField = (v: unknown) =>
-      Array.isArray(v) ? String(v[0]) : typeof v === 'string' ? v : null;
-    const msg =
-      firstField(err.detail) ||
-      firstField(err.registration_code) ||
-      firstField(err.email) ||
-      firstField(err.password) ||
-      firstField(err.department_id) ||
-      firstField(err.unit) ||
-      firstField(err.non_field_errors) ||
-      'Registration failed. Please check your details and try again.';
-    throw new Error(msg);
-  }
-  // NOTE: /auth/register/ returns access + refresh tokens. We deliberately
-  // discard them — self-signup must not produce a dashboard session.
-}
+// Trainee self-registration happens inside the DHRT (Unity) app using a
+// registration code handed out by an instructor/admin — see the
+// Registration Codes page. The dashboard has no public signup.
 
 export async function logout() {
   const tokens = getTokens();

@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { getTokens, login as apiLogin, logout as apiLogout, getProfile, clearTokens } from '@/services/api';
 
-interface User {
+export interface User {
   id: number;
   username: string;
   email: string;
   first_name: string;
   last_name: string;
+  institution?: { id: number; name: string; slug: string } | null;
   is_institution_admin?: boolean;
   is_platform_admin?: boolean;
 }

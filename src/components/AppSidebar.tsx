@@ -7,6 +7,8 @@ import {
   ClipboardList,
   Building2,
   Inbox,
+  Ticket,
+  ShieldCheck,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -21,6 +23,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { students } from "@/data/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -28,10 +31,22 @@ const navItems = [
   { title: "Case Review", url: "/cases", icon: ClipboardList },
   { title: "Inbox", url: "/inbox", icon: Inbox },
   { title: "Trainees & Assignments", url: "/licenses", icon: KeyRound },
+  { title: "Registration Codes", url: "/codes", icon: Ticket },
 ];
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const items = user?.is_platform_admin
+    ? [...navItems, { title: "Administration", url: "/admin", icon: ShieldCheck }]
+    : navItems;
+
+  const institutionName = user?.institution?.name
+    ?? (user?.is_platform_admin ? "All Institutions" : "Medulate");
+  const institutionSubtitle = user?.is_platform_admin && !user?.institution
+    ? "Platform Administrator"
+    : "Medical Education Dept.";
 
   const unreadCount = students.filter((s) => s.needsPractice || s.daysRemaining <= 3).length;
 
@@ -54,8 +69,8 @@ export function AppSidebar() {
         <div className="mt-4 flex items-center gap-2 rounded-lg bg-sidebar-accent/50 px-3 py-2">
           <Building2 className="h-4 w-4 text-sidebar-foreground/60" />
           <div>
-            <p className="text-[11px] font-semibold text-sidebar-foreground">Mercy General Hospital</p>
-            <p className="text-[9px] text-sidebar-foreground/50">Medical Education Dept.</p>
+            <p className="text-[11px] font-semibold text-sidebar-foreground">{institutionName}</p>
+            <p className="text-[9px] text-sidebar-foreground/50">{institutionSubtitle}</p>
           </div>
         </div>
       </SidebarHeader>
@@ -64,7 +79,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild size="lg">
                     <NavLink
