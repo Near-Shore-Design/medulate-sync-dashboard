@@ -48,6 +48,7 @@ const RegistrationCodesPage = () => {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [label, setLabel] = useState("");
+  const [customCode, setCustomCode] = useState("");
   const [departmentId, setDepartmentId] = useState<string>("none");
   const [institutionId, setInstitutionId] = useState<string>("");
 
@@ -57,9 +58,11 @@ const RegistrationCodesPage = () => {
   };
 
   const handleCreate = () => {
+    const code = customCode.trim().toUpperCase();
     createCode.mutate(
       {
         label: label.trim(),
+        ...(code ? { code } : {}),
         // Institution admins create codes for their own tenant; the backend
         // requires an explicit institution from platform admins.
         ...(isPlatformAdmin
@@ -70,6 +73,7 @@ const RegistrationCodesPage = () => {
         onSuccess: (created) => {
           setCreateOpen(false);
           setLabel("");
+          setCustomCode("");
           setDepartmentId("none");
           setInstitutionId("");
           toast({
@@ -197,11 +201,23 @@ const RegistrationCodesPage = () => {
           <DialogHeader>
             <DialogTitle>New Registration Code</DialogTitle>
             <DialogDescription>
-              The code is generated automatically. Share it with trainees so they can register in
-              the DHRT app.
+              Type a code your trainees will remember, or leave it blank to auto-generate one.
+              Share it with trainees so they can register in the DHRT app.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-foreground mb-1 block">
+                Code <span className="font-normal text-muted-foreground">(optional, 3-32 chars: letters, numbers, - or _)</span>
+              </label>
+              <Input
+                value={customCode}
+                onChange={(e) => setCustomCode(e.target.value.toUpperCase())}
+                placeholder="FALL26-ANESTHESIA"
+                className="text-sm font-mono tracking-wider"
+                maxLength={32}
+              />
+            </div>
             <div>
               <label className="text-xs font-semibold text-foreground mb-1 block">
                 Label <span className="font-normal text-muted-foreground">(e.g. cohort name)</span>

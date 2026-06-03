@@ -22,6 +22,8 @@ export interface CreateCodePayload {
   department?: number | null;
   // Required for platform admins, ignored for institution admins.
   institution?: number;
+  // Optional custom code. Leave blank to let the backend auto-generate.
+  code?: string;
 }
 
 export interface DepartmentOption {
