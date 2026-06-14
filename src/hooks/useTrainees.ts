@@ -71,6 +71,9 @@ function transformTrainee(t: TraineeAPI): Student {
   const fullName = t.name || `${t.first_name} ${t.last_name}`.trim() || t.username;
   return {
     id: String(t.id),
+    userId: String(t.user),
+    casesPassed: t.cases_passed,
+    totalAttempts: t.total_attempts,
     name: fullName,
     avatar: getInitials(fullName),
     unit: UNIT_MAP[t.unit] || t.unit as Student['unit'],

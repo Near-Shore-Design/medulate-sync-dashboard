@@ -8,6 +8,7 @@ import { type Student } from "@/data/mockData";
 import { Flag, Mail, Send, Clock, BookOpen, AlertTriangle, CheckCircle, ClipboardList, Edit2, Save, X, Calendar } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useStudentErrorMap, useTraineeAttempts, useCatheterFeedbackByUser } from "@/hooks/useErrors";
 
 interface StudentDetailModalProps {
   student: Student | null;
@@ -49,57 +50,6 @@ const getWalkthroughModules = (overallProgress: number) => {
   };
 };
 
-const verificationAttempts: Record<string, { attempts: number; failures: number }> = {
-  "1": { attempts: 1, failures: 0 },
-  "2": { attempts: 3, failures: 2 },
-  "3": { attempts: 0, failures: 0 },
-  "4": { attempts: 2, failures: 1 },
-  "5": { attempts: 1, failures: 0 },
-  "6": { attempts: 0, failures: 0 },
-  "7": { attempts: 1, failures: 0 },
-  "8": { attempts: 2, failures: 2 },
-  "9": { attempts: 2, failures: 1 },
-  "10": { attempts: 0, failures: 0 },
-  "11": { attempts: 1, failures: 0 },
-  "12": { attempts: 0, failures: 0 },
-};
-
-const casesCompleted: Record<string, number> = {
-  "1": 15, "2": 8, "3": 4, "4": 14, "5": 10,
-  "6": 0, "7": 17, "8": 6, "9": 13, "10": 0,
-  "11": 9, "12": 3,
-};
-
-const studentErrors: Record<string, { error: string; details: string }[]> = {
-  "2": [
-    { error: "Arterial Puncture", details: "Occurred during Case 6 (Brown, Christina) — failed to identify artery vs vein under ultrasound" },
-    { error: "Through-and-Through", details: "Occurred during Case 9 (Castell, Heather) — needle advanced too far" },
-    { error: "Excessive Cannulation Attempts", details: "3+ attempts on Case 5 (Johnston, Helena)" },
-  ],
-  "3": [
-    { error: "Guidewire Misplacement", details: "Guidewire advanced into incorrect vessel during Case 3 (Washington, Simone)" },
-    { error: "Prolonged Arrhythmia", details: "Guidewire-induced arrhythmia > 30s during Case 14 (Zhang, Colin)" },
-  ],
-  "6": [
-    { error: "Arterial Puncture", details: "Failed vessel identification on Case 15 (Nash, Jeff)" },
-    { error: "Failed Cannulation Attempts", details: "Unable to cannulate after multiple attempts on Case 12 (Shoemaker, Ashley)" },
-    { error: "Through-and-Through", details: "Needle advanced through posterior wall on Case 6 (Brown, Christina)" },
-  ],
-  "8": [
-    { error: "Excessive Cannulation Attempts", details: "4 attempts on Case 11 (Jacobson, Devin) — thick neck anatomy" },
-    { error: "Guidewire Misplacement", details: "Guidewire in subclavian instead of IJ on Case 8 (Sparrow, Timmothy)" },
-  ],
-  "10": [
-    { error: "Arterial Puncture", details: "Punctured carotid during Case 9 (Castell, Heather)" },
-    { error: "Prolonged Arrhythmia", details: "Sustained arrhythmia during Case 15 (Nash, Jeff)" },
-    { error: "Failed Cannulation Attempts", details: "Could not obtain access on Case 6 (Brown, Christina)" },
-  ],
-  "12": [
-    { error: "Through-and-Through", details: "Posterior wall puncture on Case 3 (Washington, Simone)" },
-    { error: "Guidewire Misplacement", details: "Wire advanced into contralateral vessel on Case 17 (Wilson, Alan)" },
-  ],
-};
-
 const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps) => {
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
@@ -112,13 +62,21 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
   const [editDueDate, setEditDueDate] = useState("");
   const [editUnit, setEditUnit] = useState("");
   const [editSaved, setEditSaved] = useState(false);
+  // Real per-student error names + graded attempts from the rating API (keyed by user id).
+  const { data: apiStudentErrorMap } = useStudentErrorMap();
+  const { data: attempts } = useTraineeAttempts(student?.userId);
+  const { data: catheterFeedback } = useCatheterFeedbackByUser(student?.userId);
 
   if (!student) return null;
 
   const modules = getWalkthroughModules(student.walkthroughComplete);
-  const verification = verificationAttempts[student.id] || { attempts: 0, failures: 0 };
-  const completedCases = casesCompleted[student.id] || 0;
-  const errors = studentErrors[student.id] || [];
+  // Derived from the trainee's real graded-attempt aggregates (no per-attempt
+  // verification-assessment counts exist in the API yet, so attempts == graded
+  // attempts and failures == attempts not passed).
+  const totalAttempts = student.totalAttempts ?? 0;
+  const verification = { attempts: totalAttempts, failures: Math.max(0, totalAttempts - (student.casesPassed ?? 0)) };
+  const completedCases = student.casesPassed ?? 0;
+  const errors = (apiStudentErrorMap?.[student.userId ?? ""] ?? []).map((name) => ({ error: name, details: "" }));
 
   const nameParts = student.name.split(" ");
   const firstName = nameParts[0] || "";
@@ -263,7 +221,39 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
               {errors.map((err, i) => (
                 <div key={i} className="rounded bg-background/50 px-3 py-2">
                   <p className="text-xs font-semibold text-destructive">{err.error}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{err.details}</p>
+                  {err.details && <p className="text-[10px] text-muted-foreground mt-0.5">{err.details}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent graded attempts — real needle metrics + catheter outcomes */}
+        {((attempts && attempts.length > 0) || (catheterFeedback && catheterFeedback.length > 0)) && (
+          <div className="mt-4">
+            <h4 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
+              <ClipboardList className="h-3.5 w-3.5" /> Recent Attempts
+            </h4>
+            <div className="rounded-lg border border-border p-3 space-y-2">
+              {(attempts ?? []).slice(0, 5).map((a) => (
+                <div key={a.id} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-medium text-foreground whitespace-nowrap">{a.case ? `Case ${a.case}` : "Skill practice"}</span>
+                  <div className="flex items-center gap-2.5 text-[10px] text-muted-foreground">
+                    <span>{Math.round(a.percent_score * 100)}%</span>
+                    <span>{a.needle_angle.toFixed(0)}°</span>
+                    <span>asp {a.aspiration_rate.toFixed(0)}%</span>
+                    <span>trk {a.tip_tracking_rate.toFixed(0)}%</span>
+                    <span className={`font-semibold ${a.passed ? "text-success" : "text-destructive"}`}>{a.passed ? "Pass" : "Fail"}</span>
+                  </div>
+                </div>
+              ))}
+              {(catheterFeedback ?? []).slice(0, 3).map((c) => (
+                <div key={`cath-${c.id}`} className="flex items-center justify-between gap-2 text-xs border-t border-border pt-2">
+                  <span className="font-medium text-foreground whitespace-nowrap">Catheter{c.case ? ` · Case ${c.case}` : " · practice"}</span>
+                  <div className="flex items-center gap-2.5 text-[10px] text-muted-foreground">
+                    {c.arrhythmia_ever && <span className="text-warning">arrhythmia</span>}
+                    <span className={`font-semibold ${c.passed ? "text-success" : "text-destructive"}`}>{c.passed ? "Pass" : "Fail"}</span>
+                  </div>
                 </div>
               ))}
             </div>

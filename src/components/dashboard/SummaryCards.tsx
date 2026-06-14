@@ -25,15 +25,6 @@ const progressCategories = [
   { name: "Not Started", color: "hsl(214, 32%, 78%)" },
 ];
 
-const mockStudentErrors: Record<string, string[]> = {
-  "2": ["Arterial Puncture", "Through-and-Through", "Excessive Cannulation Attempts"],
-  "3": ["Guidewire Misplacement", "Prolonged Arrhythmia"],
-  "6": ["Arterial Puncture", "Failed Cannulation Attempts", "Through-and-Through"],
-  "8": ["Excessive Cannulation Attempts", "Guidewire Misplacement"],
-  "10": ["Arterial Puncture", "Prolonged Arrhythmia", "Failed Cannulation Attempts"],
-  "12": ["Through-and-Through", "Guidewire Misplacement"],
-};
-
 const SummaryCards = ({ activeUnit, onUnitChange }: SummaryCardsProps) => {
   const navigate = useNavigate();
   const [batchOpen, setBatchOpen] = useState(false);
@@ -52,7 +43,7 @@ const SummaryCards = ({ activeUnit, onUnitChange }: SummaryCardsProps) => {
     ? { licensesUsed: apiLicenseStats.used, licensesTotal: apiLicenseStats.total }
     : mockSummaryStats;
 
-  const studentErrors = apiStudentErrorMap ?? mockStudentErrors;
+  const studentErrors: Record<string, string[]> = apiStudentErrorMap ?? {};
   const { licensesUsed, licensesTotal } = summaryStats;
   const usagePercent = licensesTotal > 0 ? Math.round((licensesUsed / licensesTotal) * 100) : 0;
 
@@ -89,7 +80,7 @@ const SummaryCards = ({ activeUnit, onUnitChange }: SummaryCardsProps) => {
 
   // Unit-filtered error counts
   const unitErrorCounts = unitStudents.reduce<Record<string, number>>((acc, s) => {
-    (studentErrors[s.id] || []).forEach((err) => { acc[err] = (acc[err] || 0) + 1; });
+    (studentErrors[s.userId ?? ""] || []).forEach((err) => { acc[err] = (acc[err] || 0) + 1; });
     return acc;
   }, {});
   const totalUnitErrors = Object.values(unitErrorCounts).reduce((a, b) => a + b, 0);

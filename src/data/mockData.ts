@@ -1,5 +1,11 @@
 export interface Student {
   id: string;
+  // Backend auth User id (string). NeedleFeedback / error maps are keyed by user id,
+  // NOT trainee id, so error lookups must use this. Optional: mock rows omit it.
+  userId?: string;
+  // Real per-trainee aggregates from the trainees API (NeedleFeedback-derived).
+  casesPassed?: number;
+  totalAttempts?: number;
   name: string;
   avatar: string;
   unit: "Anesthesia" | "Surgery" | "Internal Medicine" | "Advanced Practice Providers";

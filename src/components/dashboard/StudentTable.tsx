@@ -24,15 +24,6 @@ const getVerificationBadge = (status: Student["verificationStatus"]) => {
   }
 };
 
-const mockStudentErrors: Record<string, string[]> = {
-  "2": ["Arterial Puncture", "Through-and-Through", "Excessive Cannulation Attempts"],
-  "3": ["Guidewire Misplacement", "Prolonged Arrhythmia"],
-  "6": ["Arterial Puncture", "Failed Cannulation Attempts", "Through-and-Through"],
-  "8": ["Excessive Cannulation Attempts", "Guidewire Misplacement"],
-  "10": ["Arterial Puncture", "Prolonged Arrhythmia", "Failed Cannulation Attempts"],
-  "12": ["Through-and-Through", "Guidewire Misplacement"],
-};
-
 type SortKey = "name" | "unit" | "walkthrough" | "verification" | "deadline" | "errors" | "status";
 type SortDir = "asc" | "desc";
 
@@ -47,7 +38,7 @@ const StudentTable = ({ activeUnit, activeStatus, activeError, dashboardMode }: 
   const { data: apiStudents } = useTrainees();
   const { data: apiStudentErrorMap } = useStudentErrorMap();
   const students = apiStudents ?? mockStudents;
-  const studentErrors = apiStudentErrorMap ?? mockStudentErrors;
+  const studentErrors: Record<string, string[]> = apiStudentErrorMap ?? {};
 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -82,7 +73,7 @@ const StudentTable = ({ activeUnit, activeStatus, activeError, dashboardMode }: 
 
   // Filter by error type
   if (activeError) {
-    filtered = filtered.filter((s) => studentErrors[s.id]?.includes(activeError));
+    filtered = filtered.filter((s) => studentErrors[s.userId ?? ""]?.includes(activeError));
   }
 
   // Dashboard mode: only show students who need attention
@@ -99,7 +90,7 @@ const StudentTable = ({ activeUnit, activeStatus, activeError, dashboardMode }: 
       case "walkthrough": cmp = a.walkthroughComplete - b.walkthroughComplete; break;
       case "verification": cmp = a.verificationStatus.localeCompare(b.verificationStatus); break;
       case "deadline": cmp = a.daysRemaining - b.daysRemaining; break;
-      case "errors": cmp = (studentErrors[a.id]?.length || 0) - (studentErrors[b.id]?.length || 0); break;
+      case "errors": cmp = (studentErrors[a.userId ?? ""]?.length || 0) - (studentErrors[b.userId ?? ""]?.length || 0); break;
       case "status": cmp = (a.needsPractice ? 0 : 1) - (b.needsPractice ? 0 : 1); break;
     }
     return sortDir === "asc" ? cmp : -cmp;
@@ -156,7 +147,7 @@ const StudentTable = ({ activeUnit, activeStatus, activeError, dashboardMode }: 
             <tbody>
               {sorted.map((student) => {
                 const deadline = getDeadlineBadge(student.daysRemaining);
-                const errors = studentErrors[student.id] || [];
+                const errors = studentErrors[student.userId ?? ""] || [];
                 return (
                   <tr
                     key={student.id}

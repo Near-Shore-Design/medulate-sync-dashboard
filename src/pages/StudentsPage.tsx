@@ -17,15 +17,6 @@ import ErrorAnalytics from "@/components/dashboard/ErrorAnalytics";
 
 const units = ["All", "Anesthesia", "Surgery", "Internal Medicine", "Advanced Practice Providers"];
 
-const mockStudentErrors: Record<string, string[]> = {
-  "2": ["Arterial Puncture", "Through-and-Through", "Excessive Cannulation Attempts"],
-  "3": ["Guidewire Misplacement", "Prolonged Arrhythmia"],
-  "6": ["Arterial Puncture", "Failed Cannulation Attempts", "Through-and-Through"],
-  "8": ["Excessive Cannulation Attempts", "Guidewire Misplacement"],
-  "10": ["Arterial Puncture", "Prolonged Arrhythmia", "Failed Cannulation Attempts"],
-  "12": ["Through-and-Through", "Guidewire Misplacement"],
-};
-
 type SortKey = "name" | "unit" | "deadline" | "walkthrough" | "verification" | "errors" | "status";
 type SortDir = "asc" | "desc";
 
@@ -54,7 +45,7 @@ const StudentsPage = () => {
   const { data: apiStudentErrorMap } = useStudentErrorMap();
   const students = apiStudents ?? mockStudents;
   const errorTypes = apiErrorTypes ?? mockErrorTypes;
-  const studentErrors = apiStudentErrorMap ?? mockStudentErrors;
+  const studentErrors: Record<string, string[]> = apiStudentErrorMap ?? {};
 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchName, setSearchName] = useState("");
@@ -103,11 +94,11 @@ const StudentsPage = () => {
   if (filterDeadline === "Overdue") filtered = filtered.filter((s) => s.daysRemaining < 0);
   else if (filterDeadline === "Due Soon") filtered = filtered.filter((s) => s.daysRemaining >= 0 && s.daysRemaining <= 7);
   else if (filterDeadline === "On Track") filtered = filtered.filter((s) => s.daysRemaining > 7);
-  if (filterErrors === "Has Errors") filtered = filtered.filter((s) => (studentErrors[s.id]?.length || 0) > 0);
-  else if (filterErrors === "No Errors") filtered = filtered.filter((s) => !studentErrors[s.id]?.length);
+  if (filterErrors === "Has Errors") filtered = filtered.filter((s) => (studentErrors[s.userId ?? ""]?.length || 0) > 0);
+  else if (filterErrors === "No Errors") filtered = filtered.filter((s) => !studentErrors[s.userId ?? ""]?.length);
   if (filterStatus === "Needs Practice") filtered = filtered.filter((s) => s.needsPractice);
   else if (filterStatus === "On Track") filtered = filtered.filter((s) => !s.needsPractice);
-  if (activeErrors.length > 0) filtered = filtered.filter((s) => activeErrors.some((err) => studentErrors[s.id]?.includes(err)));
+  if (activeErrors.length > 0) filtered = filtered.filter((s) => activeErrors.some((err) => studentErrors[s.userId ?? ""]?.includes(err)));
 
   filtered.sort((a, b) => {
     let cmp = 0;
@@ -117,7 +108,7 @@ const StudentsPage = () => {
       case "deadline": cmp = a.daysRemaining - b.daysRemaining; break;
       case "walkthrough": cmp = a.walkthroughComplete - b.walkthroughComplete; break;
       case "verification": cmp = a.verificationStatus.localeCompare(b.verificationStatus); break;
-      case "errors": cmp = (studentErrors[a.id]?.length || 0) - (studentErrors[b.id]?.length || 0); break;
+      case "errors": cmp = (studentErrors[a.userId ?? ""]?.length || 0) - (studentErrors[b.userId ?? ""]?.length || 0); break;
       case "status": cmp = (a.needsPractice ? 0 : 1) - (b.needsPractice ? 0 : 1); break;
     }
     return sortDir === "asc" ? cmp : -cmp;
@@ -323,7 +314,7 @@ const StudentsPage = () => {
             <tbody>
               {filtered.map((student) => {
                 const deadline = getDeadlineBadge(student.daysRemaining);
-                const errors = studentErrors[student.id] || [];
+                const errors = studentErrors[student.userId ?? ""] || [];
                 return (
                   <tr key={student.id} onClick={() => setSelectedStudent(student)} className={`border-b transition-colors hover:bg-muted/30 cursor-pointer ${student.needsPractice ? "bg-destructive/[0.02]" : ""}`}>
                     <td className="px-3 py-3">
