@@ -18,7 +18,7 @@ export interface RegistrationCode {
   // Default "assignments" inherited by trainees who register with this code.
   default_cohort: string;
   default_deadline: string | null; // 'YYYY-MM-DD'
-  default_modules: string[];        // module names
+  default_cases: number[];          // case numbers (1-17)
 }
 
 export interface CreateCodePayload {
@@ -31,7 +31,7 @@ export interface CreateCodePayload {
   // Default assignments applied to trainees who register with the code.
   default_cohort?: string;
   default_deadline?: string | null;
-  default_modules?: string[];
+  default_cases?: number[];
 }
 
 export interface DepartmentOption {
@@ -95,7 +95,7 @@ export function useDeactivateRegistrationCode() {
 // Edit an existing code (label, department, and the default assignments). The
 // RegistrationCode viewset is a ModelViewSet, so PATCH is supported server-side.
 export type UpdateCodePayload = Partial<
-  Pick<CreateCodePayload, 'label' | 'department' | 'default_cohort' | 'default_deadline' | 'default_modules'>
+  Pick<CreateCodePayload, 'label' | 'department' | 'default_cohort' | 'default_deadline' | 'default_cases'>
 >;
 
 export function useUpdateRegistrationCode() {
@@ -112,15 +112,22 @@ export function useUpdateRegistrationCode() {
   });
 }
 
-// Curriculum module catalog (/trainees/modules/) for the assignment multi-select.
-export function useModuleOptions() {
+// Patient cases (1-17) for the assignment multi-select — these are what the experience
+// actually uses (not the 5 global Skill-Mastery modules). Scoped to the header institution
+// filter via apiFetch, but every institution has the same case_numbers 1-17.
+export function useCaseOptions() {
   return useQuery({
-    queryKey: ['module-options'],
+    queryKey: ['case-options'],
     queryFn: async () => {
-      const data = await apiFetch<PaginatedResponse<{ id: number; name: string; order: number }>>(
-        '/trainees/modules/'
-      );
-      return data.results.map((m) => ({ id: m.id, name: m.name }));
+      const data = await apiFetch<
+        | PaginatedResponse<{ id: number; case_number: number; case_name: string }>
+        | { id: number; case_number: number; case_name: string }[]
+      >('/cases/patient-cases/?page_size=100');
+      const list = Array.isArray(data) ? data : data.results;
+      return list
+        .filter((c) => c.case_number != null)
+        .sort((a, b) => a.case_number - b.case_number)
+        .map((c) => ({ case_number: c.case_number, case_name: c.case_name }));
     },
   });
 }

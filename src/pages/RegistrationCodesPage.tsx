@@ -33,7 +33,7 @@ import {
   useCreateRegistrationCode,
   useDeactivateRegistrationCode,
   useDepartmentOptions,
-  useModuleOptions,
+  useCaseOptions,
   useRegistrationCodes,
   useUpdateRegistrationCode,
   type RegistrationCode,
@@ -47,7 +47,7 @@ const RegistrationCodesPage = () => {
   const { data: codes, isLoading } = useRegistrationCodes();
   const { data: departments } = useDepartmentOptions();
   const { data: institutions } = useInstitutions(isPlatformAdmin);
-  const { data: moduleOptions } = useModuleOptions();
+  const { data: caseOptions } = useCaseOptions();
   const createCode = useCreateRegistrationCode();
   const updateCode = useUpdateRegistrationCode();
   const deactivateCode = useDeactivateRegistrationCode();
@@ -61,7 +61,7 @@ const RegistrationCodesPage = () => {
   // Default assignments inherited by trainees who register with the code.
   const [cohort, setCohort] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [modules, setModules] = useState<string[]>([]);
+  const [cases, setCases] = useState<number[]>([]);
 
   const isEditing = editingId != null;
 
@@ -72,7 +72,7 @@ const RegistrationCodesPage = () => {
     setInstitutionId("");
     setCohort("");
     setDeadline("");
-    setModules([]);
+    setCases([]);
   };
 
   const openCreate = () => {
@@ -89,12 +89,12 @@ const RegistrationCodesPage = () => {
     setInstitutionId(String(c.institution));
     setCohort(c.default_cohort ?? "");
     setDeadline(c.default_deadline ?? "");
-    setModules(c.default_modules ?? []);
+    setCases(c.default_cases ?? []);
     setDialogOpen(true);
   };
 
-  const toggleModule = (name: string) =>
-    setModules((prev) => (prev.includes(name) ? prev.filter((m) => m !== name) : [...prev, name]));
+  const toggleCase = (num: number) =>
+    setCases((prev) => (prev.includes(num) ? prev.filter((n) => n !== num) : [...prev, num]));
 
   const handleCopy = async (code: string) => {
     await navigator.clipboard.writeText(code);
@@ -105,7 +105,7 @@ const RegistrationCodesPage = () => {
     const assignments = {
       default_cohort: cohort.trim(),
       default_deadline: deadline || null,
-      default_modules: modules,
+      default_cases: cases,
     };
 
     if (isEditing) {
@@ -166,7 +166,7 @@ const RegistrationCodesPage = () => {
     const parts: string[] = [];
     if (c.default_cohort) parts.push(c.default_cohort);
     if (c.default_deadline) parts.push(`due ${c.default_deadline}`);
-    if (c.default_modules?.length) parts.push(`${c.default_modules.length} module${c.default_modules.length > 1 ? "s" : ""}`);
+    if (c.default_cases?.length) parts.push(`${c.default_cases.length} case${c.default_cases.length > 1 ? "s" : ""}`);
     return parts.length ? parts.join(" · ") : null;
   };
 
@@ -179,7 +179,7 @@ const RegistrationCodesPage = () => {
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
             Give a code to your trainees — they create their account inside the DHRT training app and
-            inherit the cohort, deadline, and modules you assign here.
+            inherit the cohort, deadline, and cases you assign here.
           </p>
         </div>
         <Button size="sm" className="gap-2" onClick={openCreate}>
@@ -286,7 +286,7 @@ const RegistrationCodesPage = () => {
             <DialogDescription>
               {isEditing
                 ? "Update the label, department, and the default assignments trainees inherit when they register."
-                : "Type a code your trainees will remember, or leave it blank to auto-generate one. The cohort, deadline, and modules below are applied to everyone who registers with it."}
+                : "Type a code your trainees will remember, or leave it blank to auto-generate one. The cohort, deadline, and cases below are applied to everyone who registers with it."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -377,19 +377,37 @@ const RegistrationCodesPage = () => {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-foreground mb-1 block">Assigned modules</label>
-                <div className="rounded-md border bg-card p-2 space-y-1.5 max-h-40 overflow-auto">
-                  {(moduleOptions ?? []).length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No modules available.</p>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-foreground">Assigned cases</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="text-[11px] text-primary hover:underline"
+                      onClick={() => setCases((caseOptions ?? []).map((c) => c.case_number))}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      className="text-[11px] text-muted-foreground hover:underline"
+                      onClick={() => setCases([])}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-md border bg-card p-2 space-y-1.5 max-h-44 overflow-auto">
+                  {(caseOptions ?? []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No cases available.</p>
                   ) : (
-                    (moduleOptions ?? []).map((m) => (
-                      <label key={m.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                    (caseOptions ?? []).map((c) => (
+                      <label key={c.case_number} className="flex items-center gap-2 text-sm cursor-pointer">
                         <Checkbox
-                          checked={modules.includes(m.name)}
-                          onCheckedChange={() => toggleModule(m.name)}
+                          checked={cases.includes(c.case_number)}
+                          onCheckedChange={() => toggleCase(c.case_number)}
                           className="h-4 w-4"
                         />
-                        {m.name}
+                        {c.case_name}
                       </label>
                     ))
                   )}
