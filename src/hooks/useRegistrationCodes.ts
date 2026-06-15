@@ -15,6 +15,10 @@ export interface RegistrationCode {
   trainee_count: number;
   created_at: string;
   updated_at: string;
+  // Default "assignments" inherited by trainees who register with this code.
+  default_cohort: string;
+  default_deadline: string | null; // 'YYYY-MM-DD'
+  default_modules: string[];        // module names
 }
 
 export interface CreateCodePayload {
@@ -24,6 +28,10 @@ export interface CreateCodePayload {
   institution?: number;
   // Optional custom code. Leave blank to let the backend auto-generate.
   code?: string;
+  // Default assignments applied to trainees who register with the code.
+  default_cohort?: string;
+  default_deadline?: string | null;
+  default_modules?: string[];
 }
 
 export interface DepartmentOption {
@@ -80,6 +88,39 @@ export function useDeactivateRegistrationCode() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['registration-codes'] });
+    },
+  });
+}
+
+// Edit an existing code (label, department, and the default assignments). The
+// RegistrationCode viewset is a ModelViewSet, so PATCH is supported server-side.
+export type UpdateCodePayload = Partial<
+  Pick<CreateCodePayload, 'label' | 'department' | 'default_cohort' | 'default_deadline' | 'default_modules'>
+>;
+
+export function useUpdateRegistrationCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: UpdateCodePayload & { id: number }) =>
+      apiFetch<RegistrationCode>(`/tenants/registration-codes/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registration-codes'] });
+    },
+  });
+}
+
+// Curriculum module catalog (/trainees/modules/) for the assignment multi-select.
+export function useModuleOptions() {
+  return useQuery({
+    queryKey: ['module-options'],
+    queryFn: async () => {
+      const data = await apiFetch<PaginatedResponse<{ id: number; name: string; order: number }>>(
+        '/trainees/modules/'
+      );
+      return data.results.map((m) => ({ id: m.id, name: m.name }));
     },
   });
 }
