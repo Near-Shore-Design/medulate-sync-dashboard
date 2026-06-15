@@ -22,8 +22,8 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { students } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useInbox } from "@/hooks/useMessages";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -48,7 +48,9 @@ export function AppSidebar() {
     ? "Platform Administrator"
     : "Medical Education Dept.";
 
-  const unreadCount = students.filter((s) => s.needsPractice || s.daysRemaining <= 3).length;
+  // Real unread-message count for the Inbox badge (was wrongly counting at-risk mock students).
+  const { data: inboxMessages } = useInbox();
+  const unreadCount = inboxMessages?.filter((m) => !m.read).length ?? 0;
 
   return (
     <Sidebar className="border-none">
