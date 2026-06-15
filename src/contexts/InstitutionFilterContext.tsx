@@ -25,7 +25,11 @@ export function InstitutionFilterProvider({ children }: { children: ReactNode })
   const setInstitutionId = (id: number | null) => {
     setInstitutionIdState(id);
     setApiInstitutionFilter(id);
-    queryClient.invalidateQueries();
+    // resetQueries (not invalidateQueries): the query keys aren't institution-aware and
+    // staleTime is 30s, so invalidate left the previously-loaded all-tenant data on screen.
+    // reset clears every cached query and refetches the active ones with the new
+    // ?institution= param, so switching institutions always shows correctly-scoped data.
+    queryClient.resetQueries();
   };
 
   // Only platform admins get to filter; clear any stale selection when a
