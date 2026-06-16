@@ -161,6 +161,24 @@ export function useRegisterTrainee() {
   });
 }
 
+/**
+ * Unenroll a trainee — DELETE /trainees/{id}/. Removes only the Trainee row
+ * (their enrollment): the user account and all historical progress (lesson
+ * completions, case attempts) are keyed on the User and survive, so the person
+ * can re-enroll later with a registration code. Tenant-scoped on the server, so
+ * you can only unenroll trainees in your own institution.
+ */
+export function useUnenrollTrainee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string | number) =>
+      apiFetch(`/trainees/${id}/`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trainees'] });
+    },
+  });
+}
+
 export function useBatchImportTrainees() {
   const queryClient = useQueryClient();
   return useMutation({

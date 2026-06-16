@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { students as mockStudents, errorTypes as mockErrorTypes, type Student } from "@/data/mockData";
-import { useTrainees } from "@/hooks/useTrainees";
+import { useTrainees, useUnenrollTrainee } from "@/hooks/useTrainees";
 import { useErrorTypes, useStudentErrorMap } from "@/hooks/useErrors";
 import { useSendMessage } from "@/hooks/useMessages";
-import { MoreHorizontal, Flag, Search, Send, ArrowUpDown, Plus, Users, CheckCircle, AlertTriangle, BookOpen, Clock, TrendingUp, Mail } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { MoreHorizontal, Flag, Search, Send, ArrowUpDown, Plus, Users, CheckCircle, AlertTriangle, BookOpen, Clock, TrendingUp, Mail, UserMinus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,6 +63,25 @@ const StudentsPage = () => {
   const [messageText, setMessageText] = useState("");
   const [messageSent, setMessageSent] = useState(false);
   const [addModuleStudent, setAddModuleStudent] = useState<Student | null>(null);
+  // Unenroll
+  const { toast } = useToast();
+  const unenrollTrainee = useUnenrollTrainee();
+  const [unenrollStudent, setUnenrollStudent] = useState<Student | null>(null);
+
+  const handleUnenroll = () => {
+    if (!unenrollStudent) return;
+    const name = unenrollStudent.name;
+    unenrollTrainee.mutate(unenrollStudent.id, {
+      onSuccess: () => {
+        toast({ title: "Trainee unenrolled", description: `${name} has been removed from the roster. Their account and history are preserved.` });
+        setUnenrollStudent(null);
+        if (selectedStudent?.id === unenrollStudent.id) setSelectedStudent(null);
+      },
+      onError: (e: unknown) => {
+        toast({ title: "Couldn't unenroll", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
+      },
+    });
+  };
 
   // Bulk email
   const [bulkEmailOpen, setBulkEmailOpen] = useState(false);
@@ -365,6 +386,7 @@ const StudentsPage = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setAddModuleStudent(student)}><Plus className="h-3.5 w-3.5 mr-2" /> Add Module</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setMessageStudent(student)}><Send className="h-3.5 w-3.5 mr-2" /> Send Message</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setUnenrollStudent(student)} className="text-destructive focus:text-destructive"><UserMinus className="h-3.5 w-3.5 mr-2" /> Unenroll</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -434,6 +456,24 @@ const StudentsPage = () => {
       </Dialog>
 
       {/* Add Module Modal */}
+      <AlertDialog open={!!unenrollStudent} onOpenChange={(open) => { if (!open) setUnenrollStudent(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2"><UserMinus className="h-4 w-4 text-destructive" /> Unenroll {unenrollStudent?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes {unenrollStudent?.name} from your roster. Their account and training history are kept,
+              so they can re-enroll later with a registration code. This does not delete any of their data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unenrollTrainee.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); handleUnenroll(); }} disabled={unenrollTrainee.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {unenrollTrainee.isPending ? "Unenrolling…" : "Unenroll"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={!!addModuleStudent} onOpenChange={() => setAddModuleStudent(null)}>
         <DialogContent className="sm:max-w-[380px]">
           <DialogHeader>
