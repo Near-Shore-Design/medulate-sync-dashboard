@@ -73,7 +73,7 @@ const StudentsPage = () => {
     const name = unenrollStudent.name;
     unenrollTrainee.mutate(unenrollStudent.id, {
       onSuccess: () => {
-        toast({ title: "Trainee unenrolled", description: `${name} has been removed from the roster. Their account and history are preserved.` });
+        toast({ title: "Trainee deleted", description: `${name} and all of their data have been permanently removed.` });
         setUnenrollStudent(null);
         if (selectedStudent?.id === unenrollStudent.id) setSelectedStudent(null);
       },
@@ -386,7 +386,7 @@ const StudentsPage = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setAddModuleStudent(student)}><Plus className="h-3.5 w-3.5 mr-2" /> Add Module</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setMessageStudent(student)}><Send className="h-3.5 w-3.5 mr-2" /> Send Message</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setUnenrollStudent(student)} className="text-destructive focus:text-destructive"><UserMinus className="h-3.5 w-3.5 mr-2" /> Unenroll</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setUnenrollStudent(student)} className="text-destructive focus:text-destructive"><UserMinus className="h-3.5 w-3.5 mr-2" /> Delete trainee</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -459,16 +459,17 @@ const StudentsPage = () => {
       <AlertDialog open={!!unenrollStudent} onOpenChange={(open) => { if (!open) setUnenrollStudent(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2"><UserMinus className="h-4 w-4 text-destructive" /> Unenroll {unenrollStudent?.name}?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2"><UserMinus className="h-4 w-4 text-destructive" /> Delete {unenrollStudent?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes {unenrollStudent?.name} from your roster. Their account and training history are kept,
-              so they can re-enroll later with a registration code. This does not delete any of their data.
+              This <span className="font-semibold text-destructive">permanently deletes</span> {unenrollStudent?.name}'s
+              account and <span className="font-semibold">all of their data</span> — training progress, case attempts,
+              scores, and errors. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={unenrollTrainee.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={(e) => { e.preventDefault(); handleUnenroll(); }} disabled={unenrollTrainee.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {unenrollTrainee.isPending ? "Unenrolling…" : "Unenroll"}
+              {unenrollTrainee.isPending ? "Deleting…" : "Delete permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
