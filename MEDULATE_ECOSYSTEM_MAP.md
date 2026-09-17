@@ -2,6 +2,8 @@
 
 This document provides a holistic architectural map of the four repositories comprising the Medulate procedural training and assessment system.
 
+For diagrams of the whole system (master view, rig internals, trainee flow, API, portal and operations), open [docs/SOPHIA_SYSTEM_MAP.html](docs/SOPHIA_SYSTEM_MAP.html) in a browser. Its generator lives in `sophia-remake/docs/system_map/`.
+
 ---
 
 ## 1. System Topology & Inter-Service Communications
@@ -10,15 +12,15 @@ This document provides a holistic architectural map of the four repositories com
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                                 PHYSICAL HARDWARE LAYER                                │
 │                                                                                        │
-│   [ Polhemus Patriot ]        [ Arduino / V2 Board ]           [ Overhead Camera ]      │
-│   (US probe & needle 6-DOF)   (syringe pressure, wire depth)   (tool tray tracking)     │
+│   [ Polhemus Patriot ]        [ Arduino control box ]          [ CV stub process ]      │
+│   (US probe & needle 6-DOF)   (syringe switch, wire depth)     (all tools = detected)   │
 └────────────────┬─────────────────────────┬──────────────────────────────┬──────────────┘
                  │                         │                              │
                  ▼                         ▼                              ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ REPO 1: Near-Shore-Design/sophia-remake (Python Hardware Server Daemon & Launcher)      │
 │                                                                                        │
-│  • PDI.dll (ctypes) 6-DOF tracking  • PySerial sensor reading  • YOLOv8 CV inference   │
+│  • PDI.dll (ctypes) 6-DOF tracking  • PySerial sensor reading  • CV stub (YOLO unused) │
 │  • Normalizes offsets & packs UDP frame: "Probe:[0] [...];Probe:[1] [...];..."         │
 └──────────────────────────────────────────┬─────────────────────────────────────────────┘
                                            │
@@ -57,7 +59,7 @@ This document provides a holistic architectural map of the four repositories com
 │ (Django REST Cloud Backend)          ││                                                │
 │                                      ││ (Institutional Web Admin & Educator Dashboard) │
 │ • Multi-tenant isolation             ││                                                │
-│ • Case catalog (gated progression)   ││ • Educator / coordinator interface             │
+│ • Case catalog (gated progression)   ││ • Admin-only sign-in (platform/institution)    │
 │ • Trainee mastery tracking           ││ • Cohort progress & student roster management  │
 │ • Telemetry rating & feedback scores ││ • Patient case deduplication                   │
 │ • PostgreSQL on Render               ││ • Deployed to Vercel (account.medulate.com)   │
@@ -71,9 +73,9 @@ This document provides a holistic architectural map of the four repositories com
 | Repository Name | Local Directory | Tech Stack | Primary Responsibilities |
 |---|---|---|---|
 | **`medulate-api`** | `/home/seth/medulate-api` | Python, Django, DRF, PostgreSQL, SimpleJWT | Central database, authentication, multi-tenant institutional scoping, patient cases, procedural scoring. |
-| **`medulate-sync-dashboard`** | `/home/seth/sophia-dashboard` | React 18, Vite, TypeScript, Tailwind, shadcn/ui | Administrative dashboard for hospital coordinators & educators to view cohorts and credentialing. |
+| **`medulate-sync-dashboard`** | `/home/seth/sophia-dashboard` | React 18, Vite, TypeScript, Tailwind, shadcn/ui | Administrative dashboard for cohorts, credentialing and account management. Only platform admins and institution admins can sign in; an instructor needs the institution-admin flag to use it. |
 | **`unity_sophia_remake`** | `/home/seth/unity_sophia_remake` & `C:\Users\smw57\sophia_unity` | Unity 6 C#, UWB, React 18, TypeScript, Tailwind | Real-time procedural simulation client + embedded trainee web shell connected via localhost WebSocket. |
-| **`sophia-remake`** | `/home/seth/sophia-remake` | Python 3.8+, YOLOv8, PyTorch, ctypes, PyInstaller | Hardware driver for Polhemus Patriot & Arduino/V2 board; streams spatial UDP telemetry to Unity. |
+| **`sophia-remake`** | `/home/seth/sophia-remake` | Python 3.8+, ctypes, pyserial, PyInstaller (YOLOv8 code present but unused) | Hardware driver for the Polhemus Patriot and Arduino control box (no V2 board support in the repo); streams spatial UDP telemetry to Unity. |
 
 ---
 
