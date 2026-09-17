@@ -38,7 +38,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const items = user?.is_platform_admin
+  const items = user?.is_platform_admin || user?.is_institution_admin
     ? [...navItems, { title: "Administration", url: "/admin", icon: ShieldCheck }]
     : navItems;
 

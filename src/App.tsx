@@ -52,9 +52,9 @@ function ProtectedRoutes() {
         <Route
           path="/admin"
           element={
-            <PlatformAdminRoute>
+            <AdminRoute>
               <AdminPage />
-            </PlatformAdminRoute>
+            </AdminRoute>
           }
         />
         <Route path="*" element={<NotFound />} />
@@ -63,10 +63,11 @@ function ProtectedRoutes() {
   );
 }
 
-// Superadmin-only routes: institution admins are bounced back to the dashboard.
-function PlatformAdminRoute({ children }: { children: React.ReactNode }) {
+// Administration is for platform admins and institution admins (the page itself
+// hides platform-only tabs, and the API enforces scope). Anyone else is bounced.
+function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  if (!user?.is_platform_admin) {
+  if (!user?.is_platform_admin && !user?.is_institution_admin) {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
