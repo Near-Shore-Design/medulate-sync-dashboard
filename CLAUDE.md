@@ -1,6 +1,6 @@
 # medulate-sync-dashboard — AI Context & Engineering Guide
 
-Institutional web dashboard for medical residency programs, nursing schools, and simulation center coordinators to monitor trainee procedural progress and credentialing across cohorts.
+Institutional web dashboard for medical residency programs, nursing schools, and simulation centers to monitor trainee procedural progress and credentialing across cohorts, and to manage accounts. **Sign-in is limited to platform admins and institution admins** (`src/services/api.ts` login check); instructors (coordinators) can only use it if their account also has the institution-admin flag.
 
 ---
 
