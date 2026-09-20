@@ -147,3 +147,29 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+// --- Public email preference endpoints (no auth: reached from a mail link) ---
+
+export interface UnsubscribeCheck {
+  valid: boolean;
+  email?: string;
+  reason?: 'invalid' | 'already_unsubscribed';
+}
+
+/** Check a token without acting on it. Safe for mail-client link pre-fetching. */
+export async function checkUnsubscribeToken(token: string): Promise<UnsubscribeCheck> {
+  const res = await fetch(`${API_BASE}/emails/unsubscribe/?token=${encodeURIComponent(token)}`);
+  if (!res.ok) throw new Error('Could not check this link.');
+  return res.json();
+}
+
+/** Actually unsubscribe. The write is a POST so a pre-fetch can never trigger it. */
+export async function confirmUnsubscribe(token: string): Promise<{ detail: string; email?: string }> {
+  const res = await fetch(`${API_BASE}/emails/unsubscribe/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) throw new Error('Could not complete the unsubscribe.');
+  return res.json();
+}

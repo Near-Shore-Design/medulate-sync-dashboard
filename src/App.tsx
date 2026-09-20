@@ -11,6 +11,7 @@ import StudentsPage from "./pages/StudentsPage";
 import CaseReviewPage from "./pages/CaseReviewPage";
 import LicensesAccessPage from "./pages/LicensesAccessPage";
 import InboxPage from "./pages/InboxPage";
+import Unsubscribe from "./pages/Unsubscribe";
 import LoginPage from "./pages/LoginPage";
 import RegistrationCodesPage from "./pages/RegistrationCodesPage";
 import AdminPage from "./pages/AdminPage";
@@ -84,6 +85,9 @@ function AppRoutes() {
           !isLoading && isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
         }
       />
+      {/* Public: reached from a link in outbound mail, where the
+          recipient is not signed in. Must stay outside ProtectedRoutes. */}
+      <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="/*" element={<ProtectedRoutes />} />
     </Routes>
   );
