@@ -57,7 +57,7 @@ production doesn't serve yet.
 | Output directory | `dist` |
 | Install command | `npm ci` (see the note below) |
 | Production branch | `main` |
-| Env: `VITE_API_URL` | `https://medulate-api.onrender.com/api` (Production and Preview) |
+| Env: `VITE_API_URL` | `https://medulate.sellarid-dev.duckdns.org/api` (Production and Preview) |
 | Domain | `account.medulate.com` |
 
 > **Lockfiles:** the repo contains both `package-lock.json` and `bun.lockb`.

@@ -8,7 +8,7 @@ Institutional web dashboard for medical residency programs, nursing schools, and
 
 - **Role**: Administrative & educator dashboard. Manages student rosters, tracks procedure performance, visualizes needle/catheter metrics, deduplicates patient case catalogs, and audits competency verification.
 - **Tech Stack**: Vite + React 18 + TypeScript + Tailwind CSS + shadcn/ui + Radix UI + TanStack React Query + Lucide React.
-- **Backend API**: Connects to `https://medulate-api.onrender.com/api` (configured via `VITE_API_URL`).
+- **Backend API**: Connects to `https://medulate.sellarid-dev.duckdns.org/api` (configured via `VITE_API_URL`).
 - **Hosting**: Vercel (`vercel.json`), mapped to `account.medulate.com` or Vercel preview URLs.
 - **Active Branch**: `main`.
 
@@ -43,7 +43,7 @@ npm run build
 ### Environment Configuration
 Create `.env` based on `.env.example`:
 ```env
-VITE_API_URL="https://medulate-api.onrender.com/api"
+VITE_API_URL="https://medulate.sellarid-dev.duckdns.org/api"
 ```
 
 ---
