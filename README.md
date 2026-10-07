@@ -35,7 +35,7 @@ npm run dev
 The only required variable is the API base URL:
 
 ```
-VITE_API_URL="https://medulate-api.onrender.com/api"
+VITE_API_URL="https://medulate.sellarid-dev.duckdns.org/api"
 ```
 
 For local dev, set it in `.env`. In production it is configured in the Vercel

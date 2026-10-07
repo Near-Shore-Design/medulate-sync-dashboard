@@ -48,7 +48,7 @@ For diagrams of the whole system (master view, rig internals, trainee flow, API,
 └──────────────────────────────────────┼─────────────────────────────────────────────────┘
                                        │
                                        │ HTTPS REST (JWT Bearer Auth)
-                                       │ Base: https://medulate-api.onrender.com/api
+                                       │ Base: https://medulate.sellarid-dev.duckdns.org/api
                                        │
                     ┌──────────────────┴──────────────────┐
                     ▼                                     ▼
@@ -96,7 +96,7 @@ For diagrams of the whole system (master view, rig internals, trainee flow, API,
   - `case:complete` payload: Serialized `CrossSceneInfo` JSON containing accuracy metrics, entry angles, redial attempts, vessel puncture confirmation, and overall score.
 
 ### C. Web Shell / Dashboard -> Medulate API (HTTPS REST)
-- **Base URL**: `https://medulate-api.onrender.com/api`
+- **Base URL**: `https://medulate.sellarid-dev.duckdns.org/api`
 - **Authentication**: `Authorization: Bearer <access_token>`
 - **Key Routes**:
   - `POST /api/auth/login/` & `POST /api/auth/token/refresh/`
@@ -114,5 +114,5 @@ For diagrams of the whole system (master view, rig internals, trainee flow, API,
 3. **Environment Parity**:
    - `medulate-api`: Render PostgreSQL.
    - `unity_sophia_remake/WebUI`: `.env` needs `VITE_MEDULATE_API_URL` and `VITE_UNITY_WS_URL="ws://127.0.0.1:8750"`.
-   - `medulate-sync-dashboard`: `.env` needs `VITE_API_URL="https://medulate-api.onrender.com/api"`.
+   - `medulate-sync-dashboard`: `.env` needs `VITE_API_URL="https://medulate.sellarid-dev.duckdns.org/api"`.
    - `sophia-remake`: `src/config/config.json` controls COM ports, YOLO weights, and sensor scenarios.
